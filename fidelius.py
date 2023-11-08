@@ -31,12 +31,12 @@ BC25519 = curve.Curve(
 )
 
 
+@dataclass(frozen=True)
 class KeyMaterial:
-    def __init__(self, private_key, public_key, x509_public_key, nonce):
-        self.private_key = private_key
-        self.public_key = public_key
-        self.x509_public_key = x509_public_key
-        self.nonce = nonce
+    private_key: str
+    public_key: str
+    x509_public_key: str
+    nonce: str
 
     @classmethod
     def generate(cls):
