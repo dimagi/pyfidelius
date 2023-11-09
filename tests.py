@@ -12,6 +12,7 @@ from fidelius import (
 #   https://github.com/mgrmtech/fidelius-cli/blob/main/README.md
 TEST_PRIVATE_KEY = "DMxHPri8d7IT23KgLk281zZenMfVHSdeamq0RhwlIBk="
 TEST_PUBLIC_KEY = "BAheD5rUqTy4V5xR4/6HWmYpopu5CO+KO8BECS0udNqUTSNo91TIqIIy1A4Vh+F94c+n9vAcwXU2bGcfsI5f69Y="
+TEST_X509_PUBLIC_KEY = "MIIBMTCB6gYHKoZIzj0CATCB3gIBATArBgcqhkjOPQEBAiB/////////////////////////////////////////7TBEBCAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqYSRShRAQge0Je0Je0Je0Je0Je0Je0Je0Je0Je0Je0JgtenHcQyGQEQQQqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0kWiCuGaG4oIa04B7dLHdI0UySPU1+bXxhsinpxaJ+ztPZAiAQAAAAAAAAAAAAAAAAAAAAFN753qL3nNZYEmMaXPXT7QIBCANCAAQIXg+a1Kk8uFecUeP+h1pmKaKbuQjvijvARAktLnTalE0jaPdUyKiCMtQOFYfhfeHPp/bwHMF1NmxnH7COX+vW"
 
 ENCRYPTION_REQUEST = EncryptionRequest(
     sender_nonce="lmXgblZwotx+DfBgKJF0lZXtAXgBEYr5khh79Zytr2Y=",
@@ -126,6 +127,22 @@ class TestIntegration(unittest.TestCase):
     def test_decryption(self):
         self.assertEqual(
             CryptoController().decrypt(DECRYPTION_REQUEST),
+            "Wormtail should never have been Potter cottage's secret keeper."
+        )
+
+    def test_encryption_x509(self):
+        x509_encryption_request = dataclasses.replace(ENCRYPTION_REQUEST)
+        x509_encryption_request.requester_public_key = TEST_X509_PUBLIC_KEY
+        self.assertEqual(
+            CryptoController().encrypt(x509_encryption_request),
+            "pzMvVZNNVtJzqPkkxcCbBUWgDEBy/mBXIeT2dJWI16ZAQnnXUb9lI+S4k8XK6mgZSKKSRIHkcNvJpllnBg548wUgavBa0vCRRwdL6kY6Yw=="
+        )
+
+    def test_decryption_x509(self):
+        x509_decryption_request = dataclasses.replace(DECRYPTION_REQUEST)
+        x509_decryption_request.sender_public_key = "MIIBMTCB6gYHKoZIzj0CATCB3gIBATArBgcqhkjOPQEBAiB/////////////////////////////////////////7TBEBCAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqYSRShRAQge0Je0Je0Je0Je0Je0Je0Je0Je0Je0Je0JgtenHcQyGQEQQQqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0kWiCuGaG4oIa04B7dLHdI0UySPU1+bXxhsinpxaJ+ztPZAiAQAAAAAAAAAAAAAAAAAAAAFN753qL3nNZYEmMaXPXT7QIBCANCAAQAVbfpqUSzF4kKSHxKum4/IZV7HbVyMS7LKZjICzSNUkeZh4A1W4xztgPlOEJTHXRs6shInc5tQJIbUsUjtgIY"
+        self.assertEqual(
+            CryptoController().decrypt(x509_decryption_request),
             "Wormtail should never have been Potter cottage's secret keeper."
         )
 

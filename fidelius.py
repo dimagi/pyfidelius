@@ -31,12 +31,12 @@ BC25519 = curve.Curve(
 )
 
 
+@dataclass(frozen=True)
 class KeyMaterial:
-    def __init__(self, private_key, public_key, x509_public_key, nonce):
-        self.private_key = private_key
-        self.public_key = public_key
-        self.x509_public_key = x509_public_key
-        self.nonce = nonce
+    private_key: str
+    public_key: str
+    x509_public_key: str
+    nonce: str
 
     @classmethod
     def generate(cls):
@@ -75,8 +75,14 @@ class KeyMaterial:
 
     @classmethod
     def encode_x509_public_key_to_base64(cls, key: Point):
-        # Todo: to be made compatible with java project
-        return encoding.pem.PEMEncoder().encode_public_key(key).encode()
+        # Adds Java Bouncy Castle X509 format prefix
+        fixed_prefix_b64 = 'MIIBMTCB6gYHKoZIzj0CATCB3gIBATArBgcqhkjOPQEBAiB/////////////////////////////////////////7TBEBCAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqYSRShRAQge0Je0Je0Je0Je0Je0Je0Je0Je0Je0Je0JgtenHcQyGQEQQQqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0kWiCuGaG4oIa04B7dLHdI0UySPU1+bXxhsinpxaJ+ztPZAiAQAAAAAAAAAAAAAAAAAAAAFN753qL3nNZYEmMaXPXT7QIBCANCAAQ='
+        x_bytes = key.x.to_bytes((key.x.bit_length() + 7) // 8, byteorder='big')
+        y_bytes = key.y.to_bytes((key.y.bit_length() + 7) // 8, byteorder='big')
+        return base64.b64encode(
+            base64.b64decode(fixed_prefix_b64) + x_bytes + y_bytes
+        ).decode('utf-8')
+
 
     @classmethod
     def generate_base64_nonce(cls):
@@ -166,11 +172,15 @@ class CryptoController:
     @classmethod
     def decode_base64_to_public_key(cls, encoded_key) -> Point:
         key_bytes = base64.b64decode(encoded_key.encode('utf-8'))
-        # Ensure the key is in uncompressed form (starts with 0x04)
-        if key_bytes[0] != 0x04:
-            raise ValueError("Invalid public key format")
-        x_bytes = key_bytes[1:33]  # 32 bytes for x-coordinate
-        y_bytes = key_bytes[33:]    # 32 bytes for y-coordinate
+        if len(key_bytes) == 65:
+            # Ensure the key is in uncompressed form (starts with 0x04)
+            if key_bytes[0] != 0x04:
+                raise ValueError("Invalid public key format")
+            x_bytes = key_bytes[1:33]  # 32 bytes for x-coordinate
+            y_bytes = key_bytes[33:]    # 32 bytes for y-coordinate
+        else:   # Assumes x509 format
+            x_bytes = key_bytes[-64:-32]
+            y_bytes = key_bytes[-32:]
         x = int.from_bytes(x_bytes, byteorder='big')
         y = int.from_bytes(y_bytes, byteorder='big')
         return Point(x, y, curve=BC25519)
