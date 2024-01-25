@@ -9,7 +9,7 @@ setup(
     url='https://github.com/dimagi/pyFidelius',
     py_modules=["fidelius"],
     install_requires=[
-        'fastecdsa==2.3.0',
-        'pycryptodome==3.18.0',
+        'fastecdsa>=2.3.0',
+        'pycryptodome>=3.19.1',
     ],
 )
